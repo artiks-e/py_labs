@@ -12,7 +12,19 @@ def open_table():
 
     except FileNotFoundError:
         print('Файл не найден!')
-        return 0
+        return ""
+
+def open_xml():
+    try:
+        with open('currency.xml', 'r') as xml_file:
+            xml_data = xml_file.read()
+        dom = minidom.parseString(xml_data)
+        elements = dom.getElementsByTagName("Valute")
+        return elements
+
+    except FileNotFoundError:
+        print('Файл не найден!')
+        return ""
 
 def find30():
     table = open_table()
@@ -21,19 +33,23 @@ def find30():
         for book in table:
             if len(book[1]) > 30:
                 count += 1
-    print(count)
+        print(f"Книг с названием длиннее 30 символов: {count}")
 
-def author(name):
+def author():
     table = open_table()
     if table:
-        flag = 0
-        for book in table:
-            if name.lower() in book[2].lower():
-                if 1997 <= int(book[3]) <= 2000:
-                    flag = 1
-                    print(book)
-        if not flag:
-            print("There's no books by this author")
+        while True:
+            name = input("Введите имя автора или 0 для завершения: ")
+            if name == "0": break
+            flag = 0
+            for book in table:
+                if name.lower() in book[2].lower():
+                    if 1997 <= int(book[3]) <= 2000:
+                        flag = 1
+                        print(book)
+            if not flag:
+                print("Нет книг этого автора")
+            input("Нажмите Enter")
 
 def generator():
     table = open_table()
@@ -45,47 +61,46 @@ def generator():
                 result.write(f"{n + 1}. {book[2]}. {book[1]} - {book[3]}\n")
 
 def xml():
-    with open('currency.xml', 'r') as xml_file:
-        xml_data = xml_file.read()
-
-    dom = minidom.parseString(xml_data)
-
-    elements = dom.getElementsByTagName("Valute")
+    elements = open_xml()
     currency_dict = {}
-
-    for node in elements:
-        for child in node.childNodes:
-            if child.nodeType == 1:
-                if child.tagName == "CharCode":
-                    if child.firstChild.nodeType == 3:
-                        title = child.firstChild.data
-                elif child.tagName == "Nominal":
-                    if child.firstChild.nodeType == 3:
-                        price = int(child.firstChild.data)
-        currency_dict[title] = price
+    if elements:
+        for node in elements:
+            for child in node.childNodes:
+                if child.nodeType == 1:
+                    if child.tagName == "CharCode":
+                        if child.firstChild.nodeType == 3:
+                            title = child.firstChild.data
+                    elif child.tagName == "Nominal":
+                        if child.firstChild.nodeType == 3:
+                            price = int(child.firstChild.data)
+            currency_dict[title] = price
 
     print(currency_dict)
-    for key in currency_dict.keys():
-        print(key, currency_dict[key])
+    # for key in currency_dict.keys():
+        # print(key, currency_dict[key])
 
 def unic_tags():
     table = open_table()
     if table:
         tags = set(book[4] for book in table)
-        for tag in tags:
-            print(tag)
+        print("Перечень издательств без повторений:")
+        # for tag in tags:
+        #     print(tag)
+        print(tags)
 
 def popular():
     table = open_table()
     if table:
+        print("20 самых популярных книг по скачиваниям:")
         most_popular = sorted(table, key=lambda book: int(book[5]), reverse=True)[:20]
-        for book in most_popular:
-            print(book)
+        print(most_popular)
+        # for book in most_popular:
+        #     print(book)
 
 
 find30()
-author("bar")
 generator()
 xml()
 unic_tags()
 popular()
+author()
